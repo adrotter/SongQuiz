@@ -85,30 +85,57 @@ namespace SongQuizlet
                 if (Int32.TryParse(response, out numChosen)) {
                     if (numChosen == correct)
                     {
+                        Console.ForegroundColor = ConsoleColor.Green;
                         Console.WriteLine("Correct.");
+                        Console.ResetColor();
                         Authorscore++;
                     }
                     else
                     {
+                        Console.ForegroundColor = ConsoleColor.Red;
                         Console.WriteLine("Incorrect.");
+                        Console.ResetColor();
                         Console.WriteLine("The answer is :" + songAuthors[songNum]);
+                        while (true)
+                        {
+                            Console.WriteLine("Type the answer the way it is spelled here exactly to continue:");
+                            response = Console.ReadLine();
+                            if (response == songAuthors[songNum])
+                                break;
+                        }
                     }
-
+                    
                 }
                 else
                 {
                     if (songAuthors[songNum] == response)
                     {
+                        Console.ForegroundColor = ConsoleColor.Green;
                         Console.WriteLine("Correct.");
+                        Console.ResetColor();
                         Authorscore++;
                     }
                     else
                     {
-                        Console.WriteLine("Incorrect, however if you made a spelling error type i");
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.Write("Incorrect");
+                        Console.ResetColor();
+                        Console.WriteLine(", however if you made a spelling error type F3");
                         Console.WriteLine("The answer is :" + songAuthors[songNum]);
-                        if (Console.ReadKey(true).Key == ConsoleKey.I)
+                        if (Console.ReadKey(true).Key == ConsoleKey.F3)
                             Authorscore++;
+                        else
+                        {
+                            while (true)
+                            {
+                                Console.WriteLine("Type the answer the way it is spelled here exactly to continue:");
+                                response = Console.ReadLine();
+                                if (response == songAuthors[songNum])
+                                    break;
+                            }
+                        }
                     }
+                    
                 }
                 Console.WriteLine("What is the name of the song?  Type the full name or just the number on the left");
                 correct = generateMC(songNames, songNum, songCount);
@@ -117,28 +144,53 @@ namespace SongQuizlet
                 {
                     if (numChosen == correct)
                     {
+                        Console.ForegroundColor = ConsoleColor.Green;
                         Console.WriteLine("Correct.");
+                        Console.ResetColor();
                         Namescore++;
                     }
                     else
                     {
+                        Console.ForegroundColor = ConsoleColor.Red;
                         Console.WriteLine("Incorrect.");
+                        Console.ResetColor();
                         Console.WriteLine("The answer is :" + songNames[songNum]);
+                        while (true)
+                        {
+                            Console.WriteLine("Type the answer the way it is spelled here exactly to continue:");
+                            response = Console.ReadLine();
+                            if (response == songAuthors[songNum])
+                                break;
+                        }
                     }
                 }
                 else
                 {
                     if (songAuthors[songNum] == response)
                     {
+                        Console.ForegroundColor = ConsoleColor.Green;
                         Console.WriteLine("Correct.");
+                        Console.ResetColor();
                         Namescore++;
                     }
                     else
                     {
-                        Console.WriteLine("Incorrect, however if you made a spelling error type i");
-                        Console.WriteLine("The answer is :" + songNames[songNum]);
-                        if (Console.ReadKey(true).Key == ConsoleKey.I)
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.Write("Incorrect");
+                        Console.ResetColor();
+                        Console.WriteLine(", however if you made a spelling error type F3");
+                        if (Console.ReadKey(true).Key == ConsoleKey.F3)
                             Namescore++;
+                        else
+                        {
+                            while (true)
+                            {
+                                Console.WriteLine("Type the answer the way it is spelled here exactly to continue:");
+                                response = Console.ReadLine();
+                                if (response == songAuthors[songNum])
+                                    break;
+                            }
+                        }
                     }
                 }
                 Player.controls.stop();
