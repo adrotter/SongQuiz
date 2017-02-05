@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Media;
 using System.Text;
 using System.Threading.Tasks;
 using WMPLib;
@@ -13,7 +14,8 @@ namespace SongQuizlet
         static void Main(string[] args)
         {
             Console.WriteLine("Welcome to Song Quizlet");
-            while (true) {
+            while (true)
+            {
                 Console.WriteLine("Enter a number corresponding to the week of music you want to listen to, or type Q to quit:");
                 string answer = Console.ReadLine();
                 int week = 0;
@@ -38,7 +40,7 @@ namespace SongQuizlet
             {
                 Environment.CurrentDirectory = weekDirectory; //change directory to the corresponding week's directory.
             }
-            catch(System.IO.DirectoryNotFoundException e)
+            catch (System.IO.DirectoryNotFoundException e)
             {
                 Console.WriteLine("Did not find a Week" + week.ToString() + " folder in the current folder.  Make sure there is one there.");
                 return;
@@ -61,12 +63,13 @@ namespace SongQuizlet
                 {//get a random song that hasn't been played before
                     if (questionsDone == songCount)
                     {
-                        showScore(Authorscore,Namescore,songCount);
+                        showScore(Authorscore, Namescore, songCount);
                         Environment.CurrentDirectory = currentDir;
                         return;
                     }
                     songNum = rng.Next(0, songCount);
-                    if (!tested[songNum]) {
+                    if (!tested[songNum])
+                    {
                         tested[songNum] = true;
                         break;
                     }
@@ -74,7 +77,7 @@ namespace SongQuizlet
                 //songNum has the index of the next song to be quizzed on.
                 Console.WriteLine("Authors score: " + Authorscore + "/" + songCount);
                 Console.WriteLine("Song name score: " + Namescore + "/" + songCount);
-                Console.WriteLine("Question " + (questionsDone + 1) +"/" + songCount+"\nType anything and then enter to continue..");
+                Console.WriteLine("Question " + (questionsDone + 1) + "/" + songCount + "\nType anything and then enter to continue..");
                 Console.ReadLine();
                 Console.WriteLine("What is the name of the author of the song?  Type the full name or just the number on the left");
                 int correct = generateMC(songAuthors, songNum, songCount);
@@ -82,7 +85,8 @@ namespace SongQuizlet
                 Player.URL = fileNames[songNum];
                 string response = Console.ReadLine();
                 int numChosen;
-                if (Int32.TryParse(response, out numChosen)) {
+                if (Int32.TryParse(response, out numChosen))
+                {
                     if (numChosen == correct)
                     {
                         Console.ForegroundColor = ConsoleColor.Green;
@@ -104,7 +108,7 @@ namespace SongQuizlet
                                 break;
                         }
                     }
-                    
+
                 }
                 else
                 {
@@ -135,7 +139,7 @@ namespace SongQuizlet
                             }
                         }
                     }
-                    
+
                 }
                 Console.WriteLine("What is the name of the song?  Type the full name or just the number on the left");
                 correct = generateMC(songNames, songNum, songCount);
@@ -159,7 +163,7 @@ namespace SongQuizlet
                         {
                             Console.WriteLine("Type the answer the way it is spelled here exactly to continue:");
                             response = Console.ReadLine();
-                            if (response == songAuthors[songNum])
+                            if (response == songNames[songNum])
                                 break;
                         }
                     }
@@ -187,7 +191,7 @@ namespace SongQuizlet
                             {
                                 Console.WriteLine("Type the answer the way it is spelled here exactly to continue:");
                                 response = Console.ReadLine();
-                                if (response == songAuthors[songNum])
+                                if (response == songNames[songNum])
                                     break;
                             }
                         }
@@ -197,7 +201,7 @@ namespace SongQuizlet
                 questionsDone++;
 
             }
-            
+
         }
 
         private static void showScore(int authorscore, int namescore, int songCount)
@@ -227,7 +231,7 @@ namespace SongQuizlet
                     if (i >= 4)
                         break;
                 }
-                while(true)
+                while (true)
                 {//get a MC choice
                     whatSong = rng.Next(0, songCount);
                     bool duplicate = false;
@@ -249,7 +253,7 @@ namespace SongQuizlet
             }
             for (int i = 0; i < 4; i++)
             {
-                Console.WriteLine(i+". "+mc[i]);
+                Console.WriteLine(i + ". " + mc[i]);
             }
             return correct;
 
@@ -265,7 +269,7 @@ namespace SongQuizlet
             int songCount = Directory.GetFiles(dir).Length;
             int leftparPos = 0;
             string temp;
-            for (int i = 0; i < songCount;i++)
+            for (int i = 0; i < songCount; i++)
             {
                 leftparPos = files[i].IndexOf('{');
                 temp = files[i].Substring(currentDir.Length + 1);
