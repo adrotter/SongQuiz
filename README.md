@@ -16,4 +16,7 @@ It's also important to use URI's of playlists and not URLs.
 
 Step 1
 ![ScreenShot](/Documentation/Instructions1.png?raw=true "Step 1")
-
+Step 2
+![ScreenShot](/Documentation/Instructions2.png?raw=true "Step 2")
+Step 3
+![ScreenShot](/Documentation/Instructions1.png?raw=true "Step 3")
