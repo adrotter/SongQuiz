@@ -19,4 +19,4 @@ Step 1
 Step 2
 ![ScreenShot](/Documentation/Instructions2.png?raw=true "Step 2")
 Step 3
-![ScreenShot](/Documentation/Instructions1.png?raw=true "Step 3")
+![ScreenShot](/Documentation/Instructions3.png?raw=true "Step 3")
