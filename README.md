@@ -14,4 +14,6 @@ After authentication, you may get an 404 error from http://localhost:8888.  This
 
 It's also important to use URI's of playlists and not URLs.  
 
+Step 1
+![Alt text](/blob/master/Documentation/Instructions1.png?raw=true "Step 1")
 
