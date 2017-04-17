@@ -231,8 +231,6 @@ namespace SongQuizlet
             int Authorscore = 0;
             int Namescore = 0;
             Random rng = new Random();
-            WindowsMediaPlayer Player = new WindowsMediaPlayer();
-            Player.settings.volume = 10;
             List<string> songNames;
             List<string> songAuthors;
             List<string> songURLS;
@@ -431,7 +429,6 @@ namespace SongQuizlet
                         }
                     }
                 }
-                Player.controls.stop();
                 questionsDone++;
 
             }
@@ -510,7 +507,7 @@ namespace SongQuizlet
                     {
                         for (int j = 0; j < 4; j++)
                         {
-                            if (songAuthorsOrName[whatSong] == mc[j] || CalculateSimilarity(songAuthorsOrName[whatSong], mc[j]) > .3) //no duplicates allowed.
+                            if (songAuthorsOrName[whatSong] == mc[j] || CalculateSimilarity(songAuthorsOrName[whatSong], mc[j]) > .45) //no duplicates allowed.
                                 duplicate = true;
                         }
                         if (!duplicate)
@@ -605,7 +602,8 @@ namespace SongQuizlet
             for (int i = 0; i < playlist.Tracks.Items.Count; i++)
             {
                 sNames.Add(playlist.Tracks.Items[i].Track.Name);
-                sURLs.Add(playlist.Tracks.Items[i].Track.Uri + "%230:30");
+                string randomTime = getRandomTimeFromTrack(playlist.Tracks.Items[i].Track);
+                sURLs.Add(playlist.Tracks.Items[i].Track.Uri + "%23"+randomTime);
                 sAuthors.Add(playlist.Tracks.Items[i].Track.Artists[0].Name);
                 songCount++;
             }
@@ -617,7 +615,8 @@ namespace SongQuizlet
                     for (int j = 0; j < extendedPlaylist.Items.Count; j++)
                     {
                         sNames.Add(extendedPlaylist.Items[j].Track.Name);
-                        sURLs.Add(extendedPlaylist.Items[j].Track.Uri + "%230:30");
+                        string randomTime = getRandomTimeFromTrack(playlist.Tracks.Items[i].Track);
+                        sURLs.Add(extendedPlaylist.Items[j].Track.Uri + "%23"+randomTime);
                         sAuthors.Add(extendedPlaylist.Items[j].Track.Artists[0].Name);
                         songCount++;
                     }
@@ -629,6 +628,25 @@ namespace SongQuizlet
             songURLs = sURLs;
             return songCount;
         }
+
+        private static string getRandomTimeFromTrack(FullTrack track)
+        {
+            int trackHalfDurationSeconds = track.DurationMs / 2000;
+            Random rng = new Random();
+            int starting = rng.Next(0, trackHalfDurationSeconds);
+            double hours = (double) starting / 3600.0;
+            double minutes = hours * 60;
+            double minuteFraction = minutes - Math.Truncate(minutes);
+            string sMinutes = ((int)minutes).ToString();
+            minuteFraction *= 60;
+            string sSeconds = ((int)minuteFraction).ToString();
+            if ((int)minuteFraction < 10)
+                sSeconds = "0" + sSeconds;
+            return sMinutes + ":" + sSeconds;
+            
+
+        }
+
         private static string getUserID(string url)
         {
             string[] userID = url.Split(':');
