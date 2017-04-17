@@ -14,6 +14,7 @@ using SpotifyAPI.Web.Auth; //All Authentication-related classes
 using SpotifyAPI.Web.Enums; //Enums
 using SpotifyAPI.Web.Models; //Models for the JSON-responses
 using System.Threading;
+using System.Diagnostics;
 
 namespace SongQuizlet
 {
@@ -26,8 +27,11 @@ namespace SongQuizlet
         {
 
             string answer;
-            String userID;
-            String playlistID;
+            String userID = "";
+            String playlistID = ""; 
+            bool validURI = true;
+            List<URIName> recentList;
+            int numberChoice;
             Console.WriteLine("Welcome to Song Quizlet");
             _spotify = new SpotifyLocalAPI();
             _spotifyWeb = new SpotifyWebAPI();
@@ -67,24 +71,76 @@ namespace SongQuizlet
                 if (answer == "Q" || answer == "q")
                     return;
             }
-
+            if (!File.Exists("recentURIs.txt"))
+                File.Create("recentURIs.txt");
             status = _spotify.GetStatus(); //status contains infos
             while (true)
             {
+                
+                recentList = fillRecentList();
+                validURI = true;
+
                 while (true)
                 {
-                    Console.WriteLine("Enter the spotify playlist URI to begin (U R I, to get this, press the ..., then Share..., then click URI.");
+                    Console.WriteLine("Enter the spotify playlist URI to begin.");
+                    Console.WriteLine("U R I, to get this Open your Spotify client, go to the playlist you want to use, press the ..., then Share..., then click URI.");
+                    Console.WriteLine("If you need more help, type help");
                     Console.WriteLine("To quit this program, type Q");
+                    Console.WriteLine("Recent URIs, type the number to load the URI:");
+                    for (int i = 0; i < recentList.Count; i++)
+                    {
+                        Console.WriteLine(i + 1 + ": " + recentList[i].Name);
+                    }
                     answer = Console.ReadLine();
                     if (answer == "Q" || answer == "q")
                         return;
-                    userID = getUserID(answer);
-                    if (userID != "")
-                        break;
-                    
+                    else if (answer.ToLower() == "help")
+                    {
+                        Process.Start("https://github.com/adrotter/SongQuiz/blob/master/README.md");
+                    }
+                    else if (Int32.TryParse(answer, out numberChoice))
+                    {
+                        if (numberChoice > recentList.Count)
+                        {
+                            Console.WriteLine("There's only " + recentList.Count + " URI entries in your recent URIs.");
+                            break;
+                        }
+                        else if (numberChoice < 1)
+                        {
+                            Console.WriteLine("You can't pick a number lower than 1.");
+                            break;
+                        }
+                        else
+                        {
+                            answer = recentList[numberChoice-1].URI;
+                        }
+                        userID = getUserID(answer);
+                        if (userID != "")
+                            break;
+                    }
+                    else
+                    {
+                        userID = getUserID(answer);
+                        if (userID != "")
+                            break;
+                    }
                 }
                 playlistID = getPlaylistID(answer);
-                while (true)
+                FullPlaylist playlist = _spotifyWeb.GetPlaylist(userID, playlistID);
+
+                if (playlist.Error != null)
+                {
+                    Console.WriteLine(playlist.Error.Message);
+                    validURI = false;
+                }
+                else
+                {
+                    recentList = addToRecentList(recentList, answer, playlist.Name);
+                    writeRecentList(recentList);
+                }
+                
+
+                while (validURI)
                 {
                     Console.WriteLine("Type MC to do multiple choice quiz or SA to do short answer quiz.  Type B to go back");
                     string quizType = Console.ReadLine();
@@ -106,9 +162,51 @@ namespace SongQuizlet
             }
         }
 
+        private static void writeRecentList(List<URIName> recentList)
+        {
+            string[] lines = new string[recentList.Count];
+            for (int i = 0; i < recentList.Count; i++)
+            {
+                lines[i] = recentList[i].Name + "\t" + recentList[i].URI;
+            }
+            File.WriteAllLines("recentURIs.txt", lines);
+        }
+
+        private static List<URIName> addToRecentList(List<URIName> recentList, string uri, string name)
+        {
+            int positionToInsert = recentList.Count;
+            for (int i = 0; i < recentList.Count; i++)
+            {
+                if (recentList[i].URI == uri)
+                    return recentList;
+            }
+            //didnt find this uri, add to end
+            if (recentList.Count == 10)
+            {
+                positionToInsert = 0;
+                recentList[0].Name = name;
+                recentList[0].URI = uri;
+            }
+            recentList.Add(new URIName(name, uri));
+            return recentList;
+        }
+
+        private static List<URIName> fillRecentList()
+        {
+            List<URIName> uriList = new List<URIName>();
+            string[] lines = File.ReadAllLines("recentURIs.txt");
+            foreach (string line in lines)
+            {
+                string[] splitString = line.Split('\t');
+                URIName uriname = new URIName(splitString[0], splitString[1]);
+                uriList.Add(uriname);
+            }
+            return uriList;
+        }
+
         private static async void doAuthorization()
         {
-            WebAPIFactory webApiFactory = new WebAPIFactory("http://localhost", 8888, "a35bc60673e543638646d303f79fb2c8", Scope.UserReadPrivate,TimeSpan.FromSeconds(20));
+            WebAPIFactory webApiFactory = new WebAPIFactory("http://localhost", 8888, "a35bc60673e543638646d303f79fb2c8", Scope.UserReadPrivate, TimeSpan.FromSeconds(20));
 
             try
             {
@@ -138,8 +236,8 @@ namespace SongQuizlet
             List<string> songNames;
             List<string> songAuthors;
             List<string> songURLS;
-            int songCount= getSongNamesAndAuthorsWithWebAPI(out songNames, out songAuthors, out songURLS, userID, playListID);
-             _spotify.Pause();
+            int songCount = getSongNamesAndAuthorsWithWebAPI(out songNames, out songAuthors, out songURLS, userID, playListID);
+            _spotify.Pause();
             songCount = removeDuplicates(songNames, songAuthors, songURLS);
             bool[] tested = new bool[songCount];
             while (true)
@@ -170,9 +268,9 @@ namespace SongQuizlet
                     Console.WriteLine("What is the name of the artist of the song?  Type the name");
                 int correct = 0;
                 if (MC)
-                     correct = generateMC(songAuthors, songNum, songCount);
-                 _spotify.PlayURL(songURLS[songNum]);
-                 _spotify.Pause();
+                    correct = generateMC(songAuthors, songNum, songCount);
+                _spotify.PlayURL(songURLS[songNum]);
+                _spotify.Pause();
                 _spotify.Play();
                 string response;
                 int numChosen;
@@ -194,7 +292,10 @@ namespace SongQuizlet
                             Console.ForegroundColor = ConsoleColor.Red;
                             Console.WriteLine("Incorrect.");
                             Console.ResetColor();
-                            Console.WriteLine("The answer is :" + songAuthors[songNum]);
+                            Console.Write("The answer is :");
+                            Console.ForegroundColor = ConsoleColor.Magenta;
+                            Console.WriteLine(songAuthors[songNum]);
+                            Console.ResetColor();
                             Console.WriteLine("Type the answer the way it is spelled here exactly to continue:");
                             response = Console.ReadLine();
                             break;
@@ -205,7 +306,10 @@ namespace SongQuizlet
                     {
                         if (MC)
                             Console.WriteLine("Type the number to the left of the name to answer");
-                        if (songAuthors[songNum] == response && !MC)
+                        else if (!MC && response == "")
+                            Console.WriteLine("You didn't type an answer");
+
+                        else if (songAuthors[songNum].ToLower() == response.ToLower() && !MC)
                         {
                             Console.ForegroundColor = ConsoleColor.Green;
                             Console.WriteLine("Correct.");
@@ -218,22 +322,32 @@ namespace SongQuizlet
                             Console.ForegroundColor = ConsoleColor.Red;
                             Console.Write("Incorrect");
                             Console.ResetColor();
-                            Console.WriteLine(", however if you made a spelling error or it was close enough type F3");
-                            Console.WriteLine("The answer is :" + songAuthors[songNum]);
+                            Console.Write(", however if you made a spelling error or it was close enough type ");
+                            Console.ForegroundColor = ConsoleColor.Cyan;
+                            Console.WriteLine("F3");
+                            Console.ResetColor();
+                            Console.Write("The answer is :");
+                            Console.ForegroundColor = ConsoleColor.Magenta;
+                            Console.WriteLine(songAuthors[songNum]);
+                            Console.ResetColor();
                             if (Console.ReadKey(true).Key == ConsoleKey.F3)
                             {
+                                Console.Write("Changed score to ");
+                                Console.ForegroundColor = ConsoleColor.Green;
+                                Console.WriteLine("Correct");
+                                Console.ResetColor();
                                 Authorscore++;
                                 break;
                             }
-                                
+
                             else
                             {
                                 Console.WriteLine("Type the answer the way it is spelled here exactly to continue:");
                                 response = Console.ReadLine();
                                 break;
-                                
+
                             }
-                        } 
+                        }
                     }
                 }
                 if (MC)
@@ -260,19 +374,24 @@ namespace SongQuizlet
                             Console.ForegroundColor = ConsoleColor.Red;
                             Console.WriteLine("Incorrect.");
                             Console.ResetColor();
-                            Console.WriteLine("The answer is :" + songNames[songNum]);
+                            Console.Write("The answer is :");
+                            Console.ForegroundColor = ConsoleColor.Magenta;
+                            Console.WriteLine(songNames[songNum]);
+                            Console.ResetColor();
                             Console.WriteLine("Type the answer the way it is spelled here exactly to continue:");
                             response = Console.ReadLine();
                             break;
-                            
-                            
+
+
                         }
                     }
                     else
                     {
                         if (MC)
                             Console.WriteLine("Type the number to the left of the name to answer");
-                        if (songNames[songNum] == response && !MC)
+                        else if (!MC && response == "")
+                            Console.WriteLine("You didn't type an answer");
+                        else if (songNames[songNum].ToLower() == response.ToLower() && !MC)
                         {
                             Console.ForegroundColor = ConsoleColor.Green;
                             Console.WriteLine("Correct.");
@@ -285,10 +404,20 @@ namespace SongQuizlet
                             Console.ForegroundColor = ConsoleColor.Red;
                             Console.Write("Incorrect");
                             Console.ResetColor();
-                            Console.WriteLine(", however if you made a spelling error or it was close enough type F3");
-                            Console.WriteLine("The answer is :" + songNames[songNum]);
+                            Console.Write(", however if you made a spelling error or it was close enough type ");
+                            Console.ForegroundColor = ConsoleColor.Cyan;
+                            Console.WriteLine("F3");
+                            Console.ResetColor();
+                            Console.Write("The answer is :");
+                            Console.ForegroundColor = ConsoleColor.Magenta;
+                            Console.WriteLine(songNames[songNum]);
+                            Console.ResetColor();
                             if (Console.ReadKey(true).Key == ConsoleKey.F3)
                             {
+                                Console.Write("Changed score to ");
+                                Console.ForegroundColor = ConsoleColor.Green;
+                                Console.WriteLine("Correct");
+                                Console.ResetColor();
                                 Namescore++;
                                 break;
                             }
@@ -297,7 +426,7 @@ namespace SongQuizlet
                                 Console.WriteLine("Type the answer the way it is spelled here exactly to continue:");
                                 response = Console.ReadLine();
                                 break;
-                                
+
                             }
                         }
                     }
@@ -314,7 +443,7 @@ namespace SongQuizlet
             int songCount = songNames.Count;
             for (int i = 0; i < songCount; i++)
             {
-                for (int j = 0; j< songCount; j++ )
+                for (int j = 0; j < songCount; j++)
                 {
                     if (i != j && songNames[i] == songNames[j] && songAuthors[i] == songAuthors[j] && songURLS[i] == songURLS[j] && songNames[i] != "remove" && songNames[j] != "remove")
                     {
@@ -356,14 +485,14 @@ namespace SongQuizlet
             int correct = rng.Next(0, 4);
             mc[correct] = songAuthorsOrName[songNum];
             tested[songNum] = true;
-            if (!checkForSufficientOptions(songAuthorsOrName, songNum,songCount))
+            if (!checkForSufficientOptions(songAuthorsOrName, songNum, songCount))
             {
                 for (int i = 0; i < 4; i++)
                 {
                     if (i == correct)
-                        Console.WriteLine(i+1 + ". " + mc[i]);
+                        Console.WriteLine(i + 1 + ". " + mc[i]);
                 }
-                return correct+1;
+                return correct + 1;
             }
             for (int i = 0; i < 4; i++)
             {
@@ -395,9 +524,9 @@ namespace SongQuizlet
             }
             for (int i = 0; i < 4; i++)
             {
-                Console.WriteLine(i+1 + ". " + mc[i]);
+                Console.WriteLine(i + 1 + ". " + mc[i]);
             }
-            return correct+1;
+            return correct + 1;
 
         }
 
@@ -430,7 +559,7 @@ namespace SongQuizlet
                 firstTrack = _spotify.GetStatus().Track;
             sNames.Add(firstTrack.TrackResource.Name);
             sAuthors.Add(firstTrack.ArtistResource.Name);
-            sURLs.Add(firstTrack.TrackResource.Uri+"%230:30");
+            sURLs.Add(firstTrack.TrackResource.Uri + "%230:30");
             songCount++;
             _spotify.Skip();
             Thread.Sleep(200);
@@ -482,7 +611,7 @@ namespace SongQuizlet
             }
             if (playlist.Tracks.Total > 100)
             {
-                for (int i = 100; i < playlist.Tracks.Total;i += 100)
+                for (int i = 100; i < playlist.Tracks.Total; i += 100)
                 {
                     Paging<PlaylistTrack> extendedPlaylist = _spotifyWeb.GetPlaylistTracks(userID, playlistID, "", 100, i, "");
                     for (int j = 0; j < extendedPlaylist.Items.Count; j++)
@@ -507,7 +636,7 @@ namespace SongQuizlet
             {
                 return userID[2].ToString();
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Console.WriteLine("Seems like you did not supply a correct URI.  This is not a URL, but a URI.");
                 Console.WriteLine("to get this, press the ..., then Share..., then click URI.");
@@ -580,7 +709,16 @@ namespace SongQuizlet
             int stepsToSame = ComputeLevenshteinDistance(source, target);
             return (1.0 - ((double)stepsToSame / (double)Math.Max(source.Length, target.Length)));
         }
+    }
 
-
+    public class URIName
+    {
+        public string Name;
+        public string URI;
+        public URIName(string name, string uri)
+        {
+            Name = name;
+            URI = uri;
+        }
     }
 }
