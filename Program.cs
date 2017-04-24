@@ -230,11 +230,14 @@ namespace SongQuizlet
             int questionsDone = 0;
             int Authorscore = 0;
             int Namescore = 0;
+            int Albumscore = 0;
             Random rng = new Random();
             List<string> songNames;
             List<string> songAuthors;
+            List<string> songAlbums;
             List<string> songURLS;
-            int songCount = getSongNamesAndAuthorsWithWebAPI(out songNames, out songAuthors, out songURLS, userID, playListID);
+            int songCount = getSongNamesAndAuthorsWithWebAPI(out songNames, out songAuthors, out songURLS, out songAlbums, userID, playListID);
+            int beatlesAlbumCount = getBeatlesAlbumCount(songAuthors);
             _spotify.Pause();
             songCount = removeDuplicates(songNames, songAuthors, songURLS);
             bool[] tested = new bool[songCount];
@@ -245,7 +248,7 @@ namespace SongQuizlet
                 {//get a random song that hasn't been played before
                     if (questionsDone == songCount)
                     {
-                        showScore(Authorscore, Namescore, songCount);
+                        showScore(Authorscore, Namescore, Albumscore, songCount, beatlesAlbumCount);
                         return;
                     }
                     songNum = rng.Next(0, songCount);
@@ -258,6 +261,7 @@ namespace SongQuizlet
                 //songNum has the index of the next song to be quizzed on.
                 Console.WriteLine("Authors score: " + Authorscore + "/" + songCount);
                 Console.WriteLine("Song name score: " + Namescore + "/" + songCount);
+                Console.WriteLine("Album name score: " + Albumscore + "/" + beatlesAlbumCount);
                 Console.WriteLine("Question " + (questionsDone + 1) + "/" + songCount + "\nType anything and then enter to continue..");
                 Console.ReadLine();
                 if (MC)
@@ -273,7 +277,7 @@ namespace SongQuizlet
                 string response;
                 int numChosen;
                 while (true)
-                {
+                {//name of author
                     response = Console.ReadLine();
                     if (Int32.TryParse(response, out numChosen))
                     {
@@ -347,7 +351,7 @@ namespace SongQuizlet
                             }
                         }
                     }
-                }
+                }//end name of author
                 if (MC)
                     Console.WriteLine("What is the name of the song?  Type the number on the left to answer");
                 else
@@ -355,7 +359,7 @@ namespace SongQuizlet
                 if (MC)
                     correct = generateMC(songNames, songNum, songCount);
                 while (true)
-                {
+                {//name of song
                     response = Console.ReadLine();
                     if (Int32.TryParse(response, out numChosen))
                     {
@@ -428,11 +432,106 @@ namespace SongQuizlet
                             }
                         }
                     }
-                }
+                }//end name of song
+                if (songAuthors[songNum] == "The Beatles")
+                {
+                    if (MC)
+                        Console.WriteLine("This is a The Beatles song, What is the name of the album?  Type the number on the left to answer");
+                    else
+                        Console.WriteLine("This is a The Beatles song, What is the name of the album?  Type the name");
+                    if (MC)
+                        correct = generateMC(songAlbums, songNum, songCount);
+                    while (true)
+                    {//Album of song
+                        response = Console.ReadLine();
+                        if (Int32.TryParse(response, out numChosen))
+                        {
+                            if (numChosen == correct)
+                            {
+                                Console.ForegroundColor = ConsoleColor.Green;
+                                Console.WriteLine("Correct.");
+                                Console.ResetColor();
+                                Albumscore++;
+                                break;
+                            }
+                            else
+                            {
+                                Console.ForegroundColor = ConsoleColor.Red;
+                                Console.WriteLine("Incorrect.");
+                                Console.ResetColor();
+                                Console.Write("The answer is :");
+                                Console.ForegroundColor = ConsoleColor.Magenta;
+                                Console.WriteLine(songAlbums[songNum]);
+                                Console.ResetColor();
+                                Console.WriteLine("Type the answer the way it is spelled here exactly to continue:");
+                                response = Console.ReadLine();
+                                break;
+
+
+                            }
+                        }
+                        else
+                        {
+                            if (MC)
+                                Console.WriteLine("Type the number to the left of the name to answer");
+                            else if (!MC && response == "")
+                                Console.WriteLine("You didn't type an answer");
+                            else if (songAlbums[songNum].ToLower() == response.ToLower() && !MC)
+                            {
+                                Console.ForegroundColor = ConsoleColor.Green;
+                                Console.WriteLine("Correct.");
+                                Console.ResetColor();
+                                Albumscore++;
+                                break;
+                            }
+                            else if (!MC)
+                            {
+                                Console.ForegroundColor = ConsoleColor.Red;
+                                Console.Write("Incorrect");
+                                Console.ResetColor();
+                                Console.Write(", however if you made a spelling error or it was close enough type ");
+                                Console.ForegroundColor = ConsoleColor.Cyan;
+                                Console.WriteLine("F3");
+                                Console.ResetColor();
+                                Console.Write("The answer is :");
+                                Console.ForegroundColor = ConsoleColor.Magenta;
+                                Console.WriteLine(songAlbums[songNum]);
+                                Console.ResetColor();
+                                if (Console.ReadKey(true).Key == ConsoleKey.F3)
+                                {
+                                    Console.Write("Changed score to ");
+                                    Console.ForegroundColor = ConsoleColor.Green;
+                                    Console.WriteLine("Correct");
+                                    Console.ResetColor();
+                                    Albumscore++;
+                                    break;
+                                }
+                                else
+                                {
+                                    Console.WriteLine("Type the answer the way it is spelled here exactly to continue:");
+                                    response = Console.ReadLine();
+                                    break;
+
+                                }
+                            }
+                        }
+                    }//end while
+                }//end if
                 questionsDone++;
 
             }
 
+        }
+
+        private static int getBeatlesAlbumCount(List<string> songAuthors)
+        {
+            int count = 0;
+            for (int i = 0; i < songAuthors.Count;i++)
+            {
+                if (songAuthors[i] == "The Beatles")
+                    count++;
+            }
+            return count;
         }
 
         private static int removeDuplicates(List<string> songNames, List<string> songAuthors, List<string> songURLS)
@@ -462,13 +561,15 @@ namespace SongQuizlet
             return songCount;
         }
 
-        private static void showScore(int authorscore, int namescore, int songCount)
+        private static void showScore(int authorscore, int namescore, int albumscore, int songCount, int albumCount)
         {
             double aperc = ((double)authorscore / (double)songCount) * 100;
             double nperc = ((double)namescore / (double)songCount) * 100;
+            double alperc = ((double)albumscore / (double)albumCount) * 100;
 
             Console.WriteLine("You got " + Math.Round(Convert.ToDecimal(aperc), 2) + "% in identifying author names");
             Console.WriteLine("You got " + Math.Round(Convert.ToDecimal(nperc), 2) + "% in identifying song names");
+            Console.WriteLine("You got " + Math.Round(Convert.ToDecimal(alperc), 2) + "% in identifying Album names");
             _spotify.Pause();
 
         }
@@ -532,7 +633,7 @@ namespace SongQuizlet
             int avaliableChoices = songCount;
             for (int i = 0; i < songCount; i++)
             {
-                if (songAuthorsOrName[i] == songAuthorsOrName[songNum])
+                if (songAuthorsOrName[i] == songAuthorsOrName[songNum] || CalculateSimilarity(songAuthorsOrName[i], songAuthorsOrName[songNum]) > .45)
                     avaliableChoices--;
             }
             if (avaliableChoices < 3)
@@ -591,12 +692,13 @@ namespace SongQuizlet
             return songCount;
         }
 
-        static int getSongNamesAndAuthorsWithWebAPI(out List<string> songNames, out List<string> songAuthors, out List<string> songURLs, string userID, string playlistID)
+        static int getSongNamesAndAuthorsWithWebAPI(out List<string> songNames, out List<string> songAuthors, out List<string> songURLs, out List<string> songAlbums, string userID, string playlistID)
         {
             int songCount = 0;
             List<string> sNames = new List<string>();
             List<string> sAuthors = new List<string>();
             List<string> sURLs = new List<string>();
+            List<string> sAlbums = new List<string>();
             Console.WriteLine("Fetching song info from your Spotify application..");
             FullPlaylist playlist = _spotifyWeb.GetPlaylist(userID, playlistID);
             for (int i = 0; i < playlist.Tracks.Items.Count; i++)
@@ -605,6 +707,7 @@ namespace SongQuizlet
                 string randomTime = getRandomTimeFromTrack(playlist.Tracks.Items[i].Track);
                 sURLs.Add(playlist.Tracks.Items[i].Track.Uri + "%23"+randomTime);
                 sAuthors.Add(playlist.Tracks.Items[i].Track.Artists[0].Name);
+                sAlbums.Add(playlist.Tracks.Items[i].Track.Album.Name);
                 songCount++;
             }
             if (playlist.Tracks.Total > 100)
@@ -618,6 +721,7 @@ namespace SongQuizlet
                         string randomTime = getRandomTimeFromTrack(playlist.Tracks.Items[i].Track);
                         sURLs.Add(extendedPlaylist.Items[j].Track.Uri + "%23"+randomTime);
                         sAuthors.Add(extendedPlaylist.Items[j].Track.Artists[0].Name);
+                        sAlbums.Add(extendedPlaylist.Items[j].Track.Album.Name);
                         songCount++;
                     }
                 }
@@ -626,6 +730,7 @@ namespace SongQuizlet
             songNames = sNames;
             songAuthors = sAuthors;
             songURLs = sURLs;
+            songAlbums = sAlbums;
             return songCount;
         }
 
