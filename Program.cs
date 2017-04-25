@@ -63,16 +63,31 @@ namespace SongQuizlet
                     Console.ReadLine();
                 }
             }
-
-            while (!_spotify.Connect())
+            try
             {
-                Console.WriteLine("Could not connect to Spotify.  Type Q to quit, or anything else and enter to check connectivity.");
-                answer = Console.ReadLine();
-                if (answer == "Q" || answer == "q")
-                    return;
+                _spotify.Connect();
             }
-            if (!File.Exists("recentURIs.txt"))
-                File.Create("recentURIs.txt");
+            catch(Exception e)
+            {
+                Console.WriteLine("Could not connect to Spotify.");
+                Console.WriteLine(e.Message);
+                Console.WriteLine("Try restarting this program.  If that doesn't work try restarting Spotify.  If that doesn't work try restarting your computer.");
+                Console.WriteLine("Type enter to quit");
+                Console.ReadLine();
+                return;
+            }
+            try
+            {
+                if (!File.Exists("recentURIs.txt"))
+                    File.Create("recentURIs.txt");
+            }
+            catch(Exception e)
+            {
+                Console.WriteLine("Something went wrong with recentURIs.txt, try restarting the program.  If that doesn't work, try deleting recentURIs.txt.");
+                Console.WriteLine("If that doesn't work, try restarting your computer.  Press enter to quit.");
+                Console.ReadLine();
+                return;
+            }
             status = _spotify.GetStatus(); //status contains infos
             while (true)
             {
@@ -285,7 +300,7 @@ namespace SongQuizlet
                         {
                             Console.ForegroundColor = ConsoleColor.Green;
                             Console.WriteLine("Correct.");
-                            Console.ResetColor();
+                            Console.ForegroundColor = ConsoleColor.White;
                             Authorscore++;
                             break;
                         }
@@ -293,11 +308,11 @@ namespace SongQuizlet
                         {
                             Console.ForegroundColor = ConsoleColor.Red;
                             Console.WriteLine("Incorrect.");
-                            Console.ResetColor();
+                            Console.ForegroundColor = ConsoleColor.White;
                             Console.Write("The answer is :");
                             Console.ForegroundColor = ConsoleColor.Magenta;
                             Console.WriteLine(songAuthors[songNum]);
-                            Console.ResetColor();
+                            Console.ForegroundColor = ConsoleColor.White;
                             Console.WriteLine("Type the answer the way it is spelled here exactly to continue:");
                             response = Console.ReadLine();
                             break;
@@ -315,7 +330,7 @@ namespace SongQuizlet
                         {
                             Console.ForegroundColor = ConsoleColor.Green;
                             Console.WriteLine("Correct.");
-                            Console.ResetColor();
+                            Console.ForegroundColor = ConsoleColor.White;
                             Authorscore++;
                             break;
                         }
@@ -323,21 +338,21 @@ namespace SongQuizlet
                         {
                             Console.ForegroundColor = ConsoleColor.Red;
                             Console.Write("Incorrect");
-                            Console.ResetColor();
+                            Console.ForegroundColor = ConsoleColor.White;
                             Console.Write(", however if you made a spelling error or it was close enough type ");
                             Console.ForegroundColor = ConsoleColor.Cyan;
                             Console.WriteLine("F3");
-                            Console.ResetColor();
+                            Console.ForegroundColor = ConsoleColor.White;
                             Console.Write("The answer is :");
                             Console.ForegroundColor = ConsoleColor.Magenta;
                             Console.WriteLine(songAuthors[songNum]);
-                            Console.ResetColor();
+                            Console.ForegroundColor = ConsoleColor.White;
                             if (Console.ReadKey(true).Key == ConsoleKey.F3)
                             {
                                 Console.Write("Changed score to ");
                                 Console.ForegroundColor = ConsoleColor.Green;
                                 Console.WriteLine("Correct");
-                                Console.ResetColor();
+                                Console.ForegroundColor = ConsoleColor.White;
                                 Authorscore++;
                                 break;
                             }
@@ -367,7 +382,7 @@ namespace SongQuizlet
                         {
                             Console.ForegroundColor = ConsoleColor.Green;
                             Console.WriteLine("Correct.");
-                            Console.ResetColor();
+                            Console.ForegroundColor = ConsoleColor.White;
                             Namescore++;
                             break;
                         }
@@ -375,11 +390,11 @@ namespace SongQuizlet
                         {
                             Console.ForegroundColor = ConsoleColor.Red;
                             Console.WriteLine("Incorrect.");
-                            Console.ResetColor();
+                            Console.ForegroundColor = ConsoleColor.White;
                             Console.Write("The answer is :");
                             Console.ForegroundColor = ConsoleColor.Magenta;
                             Console.WriteLine(songNames[songNum]);
-                            Console.ResetColor();
+                            Console.ForegroundColor = ConsoleColor.White;
                             Console.WriteLine("Type the answer the way it is spelled here exactly to continue:");
                             response = Console.ReadLine();
                             break;
@@ -397,7 +412,7 @@ namespace SongQuizlet
                         {
                             Console.ForegroundColor = ConsoleColor.Green;
                             Console.WriteLine("Correct.");
-                            Console.ResetColor();
+                            Console.ForegroundColor = ConsoleColor.White;
                             Namescore++;
                             break;
                         }
@@ -405,21 +420,21 @@ namespace SongQuizlet
                         {
                             Console.ForegroundColor = ConsoleColor.Red;
                             Console.Write("Incorrect");
-                            Console.ResetColor();
+                            Console.ForegroundColor = ConsoleColor.White;
                             Console.Write(", however if you made a spelling error or it was close enough type ");
                             Console.ForegroundColor = ConsoleColor.Cyan;
                             Console.WriteLine("F3");
-                            Console.ResetColor();
+                            Console.ForegroundColor = ConsoleColor.White;
                             Console.Write("The answer is :");
                             Console.ForegroundColor = ConsoleColor.Magenta;
                             Console.WriteLine(songNames[songNum]);
-                            Console.ResetColor();
+                            Console.ForegroundColor = ConsoleColor.White;
                             if (Console.ReadKey(true).Key == ConsoleKey.F3)
                             {
                                 Console.Write("Changed score to ");
                                 Console.ForegroundColor = ConsoleColor.Green;
                                 Console.WriteLine("Correct");
-                                Console.ResetColor();
+                                Console.ForegroundColor = ConsoleColor.White;
                                 Namescore++;
                                 break;
                             }
@@ -450,7 +465,7 @@ namespace SongQuizlet
                             {
                                 Console.ForegroundColor = ConsoleColor.Green;
                                 Console.WriteLine("Correct.");
-                                Console.ResetColor();
+                                Console.ForegroundColor = ConsoleColor.White;
                                 Albumscore++;
                                 break;
                             }
@@ -458,11 +473,11 @@ namespace SongQuizlet
                             {
                                 Console.ForegroundColor = ConsoleColor.Red;
                                 Console.WriteLine("Incorrect.");
-                                Console.ResetColor();
+                                Console.ForegroundColor = ConsoleColor.White;
                                 Console.Write("The answer is :");
                                 Console.ForegroundColor = ConsoleColor.Magenta;
                                 Console.WriteLine(songAlbums[songNum]);
-                                Console.ResetColor();
+                                Console.ForegroundColor = ConsoleColor.White;
                                 Console.WriteLine("Type the answer the way it is spelled here exactly to continue:");
                                 response = Console.ReadLine();
                                 break;
@@ -480,7 +495,7 @@ namespace SongQuizlet
                             {
                                 Console.ForegroundColor = ConsoleColor.Green;
                                 Console.WriteLine("Correct.");
-                                Console.ResetColor();
+                                Console.ForegroundColor = ConsoleColor.White;
                                 Albumscore++;
                                 break;
                             }
@@ -488,21 +503,21 @@ namespace SongQuizlet
                             {
                                 Console.ForegroundColor = ConsoleColor.Red;
                                 Console.Write("Incorrect");
-                                Console.ResetColor();
+                                Console.ForegroundColor = ConsoleColor.White;
                                 Console.Write(", however if you made a spelling error or it was close enough type ");
                                 Console.ForegroundColor = ConsoleColor.Cyan;
                                 Console.WriteLine("F3");
-                                Console.ResetColor();
+                                Console.ForegroundColor = ConsoleColor.White;
                                 Console.Write("The answer is :");
                                 Console.ForegroundColor = ConsoleColor.Magenta;
                                 Console.WriteLine(songAlbums[songNum]);
-                                Console.ResetColor();
+                                Console.ForegroundColor = ConsoleColor.White;
                                 if (Console.ReadKey(true).Key == ConsoleKey.F3)
                                 {
                                     Console.Write("Changed score to ");
                                     Console.ForegroundColor = ConsoleColor.Green;
                                     Console.WriteLine("Correct");
-                                    Console.ResetColor();
+                                    Console.ForegroundColor = ConsoleColor.White;
                                     Albumscore++;
                                     break;
                                 }
